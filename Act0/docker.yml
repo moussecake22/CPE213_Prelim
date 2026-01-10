@@ -1,0 +1,30 @@
+---
+name: Run Docker container on all servers
+  hosts: servers
+  become: yes
+  vars_files:
+    - group_vars/all.yml
+
+  tasks:
+
+    - name: Stop old container if exists
+      shell: |
+        docker rm -f {{ project_name }}-container || true
+      ignore_errors: true
+
+    - name: Run new container
+      shell: >
+        docker run -d
+        --name {{ project_name }}-container
+        --restart always
+        -p 8080:80
+        {{ project_name }}:{{ image_version }}
+      register: run_result
+      changed_when: "'Error' not in run_result.stderr"
+
+    - name: Show container status
+      shell: docker ps
+      register: ps_output
+
+    - debug:
+        var: ps_output.stdout
