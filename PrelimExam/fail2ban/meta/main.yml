@@ -1,0 +1,4 @@
+---
+name: fail2ban
+description: Configures the fail2ban service on a Linux system.
+dependencies: []

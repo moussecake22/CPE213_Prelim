@@ -1,0 +1,54 @@
+---
+- name: Install UFW
+  apt:
+    name: ufw 
+    state: present
+
+- name: Set Default Policy to deny Incoming
+  ufw:
+    direction: incoming
+    policy: deny 
+
+- name: Allow SSH with Rate Limiting
+  ufw:
+    rule: limit
+    port: "{{ item }}"
+    proto: tcp
+  loop: "{{ allowed_ports }}"
+  #limit blocks IP if 6 connections are made in 30 Seconds
+
+- name: Enable UFW
+  ufw: 
+    state: enabled
+
+- name: Disable root login
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?PermitRootLogin'
+    line: 'PermitRootLogin no'
+
+- name: Change SSH port to 2222
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^#?Port'
+    line: 'Port 2222'
+
+- name: Restart SSH
+  service:
+    name: ssh
+    state: restarted
+
+- name: Block all incoming traffic
+  command: ufw deny from any to any
+  when: panic_mode == true
+ 
+- name: Block all outgoing traffic
+  command: ufw deny out from any to any
+  when: panic_mode == true
+
+- name: install apache2
+  package:
+    name:
+      - "{{ apache_package }}"
+    state: latest
+    update_cache: yes
